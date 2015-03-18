@@ -2,88 +2,29 @@
 
 var React = require('react');
 var Fluxxor = require('fluxxor');
-var request = require('superagent');
-
-var constants = {
-  ADD_PLATYPUS: 'ADD_PLATYPUS',
-  TOGGLE_EDIT_PLATYPUS: 'TOGGLE_EDIT_PLATYPUS',
-  UPDATE_PLATYPUS: 'UPDATE_PLATYPUS',
-  REMOVE_PLATYPUS: 'REMOVE_PLATYPUS'
-};
-
-var baseUrl = '/api/v1/platypus';
-
-var PlatypusStore = Fluxxor.createStore({
-  initialize: function() {
-    this.platypuses = [];
-
-    this.bindActions(
-      constants.ADD_PLATYPUS, this.onNewPlatypus,
-      constants.REMOVE_PLATYPUS, this.onRemovePlatypus
-    );
-
-    request
-      .get(baseUrl)
-      .end(function(err, res) {
-        if (err) return console.log(err);
-
-        this.platypuses = res.body;
-        this.emit('change');
-      }.bind(this));
-  },
-
-  onNewPlatypus: function(platypus) {
-    request
-      .post(baseUrl)
-      .send(platypus)
-      .end(function(err, res) {
-        if (err) return console.log(err);
-
-        this.platypuses.push(res.body);
-        this.emit('change');
-      }.bind(this));
-  },
-
-  onRemovePlatypus: function(platypus) {
-    request
-      .del(baseUrl + '/' + platypus._id)
-      .end(function(err, res) {
-        if (err) return console.log(err);
-
-        this.platypuses.splice(this.platypuses.indexOf(platypus), 1);
-        this.emit('change');
-      }.bind(this));
-  },
-
-  getState: function() {
-    return {platypuses: this.platypuses};
-  }
-});
-
-var actions = {
-  addPlatypus: function(platypus) {
-    this.dispatch(constants.ADD_PLATYPUS, platypus);
-  },
-
-  deletePlatypus: function(platypus) {
-    this.dispatch(constants.REMOVE_PLATYPUS, platypus);
-  }
-};
-
-var stores = {
-  PlatypusStore: new PlatypusStore()
-};
-
-var flux = new Fluxxor.Flux(stores, actions);
+// var request = require('superagent');
+var PlatypusStore = require('../stores/PlatypusStore');
+var stores = require('../stores/Stores');
 
 var FluxMixin = Fluxxor.FluxMixin(React);
 var StoreWatchMixin = Fluxxor.StoreWatchMixin;
 
+// Method to retrieve state from Stores
+function getZooState() {
+  return  PlatypusStore.getState();
+}
+
+
+
 var PlatypusForm = React.createClass({
   mixins: [FluxMixin],
+
+  // Get initial state from stores
   getInitialState: function() {
-    return {newPlatypus: {platypusName: '', platypusAge: ''}};
+    //return {newPlatypus: {platypusName: '', platypusAge: ''}};
+    return {newPlatypus: {platypusName: '', platypusAge: ''}}
   },
+
   handleChange: function(event) {
     event.preventDefault();
 
@@ -95,12 +36,15 @@ var PlatypusForm = React.createClass({
 
     this.setState(stateCopy);
   },
+
   handleSubmit: function(event) {
     event.preventDefault();
 
     this.getFlux().actions.addPlatypus(this.state.newPlatypus);
+
     this.setState({newPlatypus: {platypusName: '', platypusAge: ''}});
   },
+
   render: function() {
     return (
       <form onSubmit={this.handleSubmit}>
@@ -111,7 +55,8 @@ var PlatypusForm = React.createClass({
         <button type="submit">Create New Platypus</button>
       </form>
     )
-  }
+  },
+
 });
 
 var Platypus = React.createClass({
@@ -146,9 +91,11 @@ var PlatypusApp = React.createClass({
   getStateFromFlux: function() {
     console.log("inside getStateFromFlux");
     console.log("getFlux()");
-    console.log(this.getFlux());
-    return this.getFlux().store('PlatypusStore').getState();
+    //console.log(this.getFlux());
+    //return this.getFlux().store('PlatypusStore').getState();
+    return getZooState();
   },
+
   render: function() {
     console.log("platypusApp render");
     return (
